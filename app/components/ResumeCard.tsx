@@ -1,53 +1,47 @@
-import { Link } from "react-router";
+import {Link} from "react-router";
 import ScoreCircle from "~/components/ScoreCircle";
+import {useEffect, useState} from "react";
+import {usePuterStore} from "~/lib/puter";
 
-type Resume = {
-  id: string;
-  companyName: string;
-  jobTitle: string;
-  imagePath: string;
-  feedback: {
-    overallScore: number;
-  };
-};
+const ResumeCard = ({ resume: { id, companyName, jobTitle, feedback, imagePath } }: { resume: Resume }) => {
+    const { fs } = usePuterStore();
+    const [resumeUrl, setResumeUrl] = useState('');
 
-type ResumeCardProps = {
-  resume: Resume;
-};
+    useEffect(() => {
+        const loadResume = async () => {
+            const blob = await fs.read(imagePath);
+            if(!blob) return;
+            let url = URL.createObjectURL(blob);
+            setResumeUrl(url);
+        }
 
-const ResumeCard = ({ resume }: ResumeCardProps) => {
-  const { id, companyName, jobTitle, imagePath, feedback } = resume;
+        loadResume();
+    }, [imagePath]);
 
-  return (
-    <Link
-      to={`/resume/${id}`}
-      className="resume-card bg-white rounded-2xl shadow-md p-5 flex flex-col gap-4 animate-in fade-in duration-1000"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-semibold text-gray-800">
-            {companyName}
-          </h2>
-
-          <h3 className="text-gray-500 text-sm">
-            {jobTitle}
-          </h3>
-        </div>
-
-        <ScoreCircle score={feedback?.overallScore ?? 0} />
-      </div>
-
-      {/* Resume Preview */}
-      <div className="gradient-border rounded-xl overflow-hidden">
-        <img
-          src={imagePath}
-          alt="resume preview"
-          className="w-full h-[300px] object-cover object-top"
-        />
-      </div>
-    </Link>
-  );
-};
-
-export default ResumeCard;
+    return (
+        <Link to={`/resume/${id}`} className="resume-card animate-in fade-in duration-1000">
+            <div className="resume-card-header">
+                <div className="flex flex-col gap-2">
+                    {companyName && <h2 className="!text-black font-bold break-words">{companyName}</h2>}
+                    {jobTitle && <h3 className="text-lg break-words text-gray-500">{jobTitle}</h3>}
+                    {!companyName && !jobTitle && <h2 className="!text-black font-bold">Resume</h2>}
+                </div>
+                <div className="flex-shrink-0">
+                    <ScoreCircle score={feedback.overallScore} />
+                </div>
+            </div>
+            {resumeUrl && (
+                <div className="gradient-border animate-in fade-in duration-1000">
+                    <div className="w-full h-full">
+                        <img
+                            src={resumeUrl}
+                            alt="resume"
+                            className="w-full h-[350px] max-sm:h-[200px] object-cover object-top"
+                        />
+                    </div>
+                </div>
+                )}
+        </Link>
+    )
+}
+export default ResumeCard
