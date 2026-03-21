@@ -28,24 +28,43 @@ const prepareInstructions = ({
 Job Description:
 ${jobDescription}
 
-You MUST respond with ONLY a valid JSON object. No extra text, no markdown, no backticks, no explanation. Just the raw JSON object using this exact structure:
+You MUST respond with ONLY a valid JSON object. No extra text, no markdown, no backticks, no explanation before or after. Just the raw JSON using this EXACT structure:
 {
   "overallScore": <number 0-100>,
   "ATS": {
     "score": <number 0-100>,
-    "suggestions": [<string>, ...]
+    "tips": [
+      { "type": "good", "tip": "<short title>", "explanation": "<detailed explanation>" },
+      { "type": "improve", "tip": "<short title>", "explanation": "<detailed explanation>" }
+    ]
   },
   "toneAndStyle": {
     "score": <number 0-100>,
-    "suggestions": [<string>, ...]
+    "tips": [
+      { "type": "good", "tip": "<short title>", "explanation": "<detailed explanation>" },
+      { "type": "improve", "tip": "<short title>", "explanation": "<detailed explanation>" }
+    ]
   },
   "content": {
     "score": <number 0-100>,
-    "suggestions": [<string>, ...]
+    "tips": [
+      { "type": "good", "tip": "<short title>", "explanation": "<detailed explanation>" },
+      { "type": "improve", "tip": "<short title>", "explanation": "<detailed explanation>" }
+    ]
   },
-  "sections": {
+  "structure": {
     "score": <number 0-100>,
-    "suggestions": [<string>, ...]
+    "tips": [
+      { "type": "good", "tip": "<short title>", "explanation": "<detailed explanation>" },
+      { "type": "improve", "tip": "<short title>", "explanation": "<detailed explanation>" }
+    ]
+  },
+  "skills": {
+    "score": <number 0-100>,
+    "tips": [
+      { "type": "good", "tip": "<short title>", "explanation": "<detailed explanation>" },
+      { "type": "improve", "tip": "<short title>", "explanation": "<detailed explanation>" }
+    ]
   }
 }`;
 };
@@ -102,7 +121,6 @@ const Upload = () => {
       // 🔹 Convert PDF → Image
       setStatusText("Converting to image...");
       const imageFile: PdfConversionResult = await convertPdfToImage(file);
-
       if (!imageFile.file) {
         setStatusText("Error: Failed to convert PDF to image");
         setIsProcessing(false);
@@ -111,9 +129,7 @@ const Upload = () => {
 
       // 🔹 Upload image
       setStatusText("Uploading the image...");
-      const uploadedImage: FSItem | undefined = await fs.upload([
-        imageFile.file,
-      ]);
+      const uploadedImage: FSItem | undefined = await fs.upload([imageFile.file]);
       if (!uploadedImage) {
         setStatusText("Error: Failed to upload image");
         setIsProcessing(false);
@@ -195,10 +211,9 @@ const Upload = () => {
         return;
       }
 
-      // ✅ Parse as JSON since AI returns structured data
+      // ✅ Clean and parse JSON
       let parsedFeedback;
       try {
-        // Strip any accidental markdown backticks just in case
         const cleaned = feedbackText
           .replace(/```json/g, "")
           .replace(/```/g, "")
@@ -207,12 +222,12 @@ const Upload = () => {
       } catch (parseErr) {
         console.error("JSON PARSE ERROR:", parseErr);
         console.error("RAW TEXT WAS:", feedbackText);
-        // Fallback — store as plain string if JSON parsing fails
-        parsedFeedback = feedbackText;
+        setStatusText("Error: Failed to parse AI response");
+        setIsProcessing(false);
+        return;
       }
 
       data.feedback = parsedFeedback;
-
       await kv.set(`resume:${uuid}`, JSON.stringify(data));
 
       console.log("NAVIGATING TO:", `/resume/${uuid}`);
@@ -275,9 +290,7 @@ const Upload = () => {
                 name="job-description"
                 placeholder="Job Description"
               />
-
               <FileUploader onFileSelect={handleFileSelect} />
-
               <button className="primary-button" type="submit">
                 Analyze Resume
               </button>
