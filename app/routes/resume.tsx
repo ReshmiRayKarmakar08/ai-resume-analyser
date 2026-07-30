@@ -1,103 +1,107 @@
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { useEffect, useState } from "react";
+
 import { usePuterStore } from "~/lib/puter";
+import { resumeStorage } from "~/lib/resumeStorage";
 import Summary from "~/components/Summary";
 import ATS from "~/components/ATS";
 import Details from "~/components/Details";
 
-export const meta = () => ([
-  { title: 'Resumind | Review' },
-  { name: 'description', content: 'Detailed overview of your resume' },
-])
+export const meta = () => [
+  { title: "Resumind | Resume Review" },
+  { name: "description", content: "Detailed ATS score and resume overview" },
+];
 
 const Resume = () => {
-  const { auth, isLoading, fs, kv } = usePuterStore();
+  const puterStore = usePuterStore();
   const { id } = useParams();
-  const [imageUrl, setImageUrl] = useState('');
-  const [resumeUrl, setResumeUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState("");
+  const [resumeUrl, setResumeUrl] = useState("");
   const [feedback, setFeedback] = useState<any>(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isLoading && !auth.isAuthenticated) navigate(`/auth?next=/resume/${id}`);
-  }, [isLoading]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     const loadResume = async () => {
+      if (!id) return;
+      setLoading(true);
       try {
-        const resume = await kv.get(`resume:${id}`);
-        if (!resume) return;
-
-        const data = JSON.parse(resume);
-        console.log("LOADED DATA:", data);
-        console.log("FEEDBACK:", data.feedback);
-
-        // 🔹 Load PDF
-        const resumeBlob = await fs.read(data.resumePath);
-        if (!resumeBlob) return;
-        const pdfBlob = new Blob([resumeBlob], { type: 'application/pdf' });
-        setResumeUrl(URL.createObjectURL(pdfBlob));
-
-        // 🔹 Load image
-        const imageBlob = await fs.read(data.imagePath);
-        if (!imageBlob) return;
-        setImageUrl(URL.createObjectURL(imageBlob));
-
-        // ✅ Handle both string and object feedback
-        if (typeof data.feedback === "string") {
-          try {
-            const cleaned = data.feedback
-              .replace(/```json/g, "")
-              .replace(/```/g, "")
-              .trim();
-            setFeedback(JSON.parse(cleaned));
-          } catch {
-            console.error("Failed to parse feedback string");
-            setFeedback(null);
-          }
-        } else {
-          setFeedback(data.feedback);
+        const res = await resumeStorage.getResume(id, puterStore);
+        if (!res || !res.data) {
+          setErrorMsg("Resume review not found. It may have been deleted or created on another device.");
+          setLoading(false);
+          return;
         }
 
+        setImageUrl(res.imageUrl);
+        setResumeUrl(res.pdfUrl);
+
+        let fb = res.data.feedback;
+        if (typeof fb === "string") {
+          try {
+            const cleaned = fb.replace(/```json/g, "").replace(/```/g, "").trim();
+            fb = JSON.parse(cleaned);
+          } catch {
+            fb = null;
+          }
+        }
+        setFeedback(fb);
       } catch (err) {
         console.error("Failed to load resume:", err);
+        setErrorMsg("Failed to load resume analysis.");
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (id) loadResume();
-  }, [id]);
+    loadResume();
+  }, [id, puterStore.auth.isAuthenticated]);
 
   return (
-    <main className="!pt-0">
+    <main className="!pt-0 min-h-screen">
       <nav className="resume-nav">
         <Link to="/" className="back-button">
-          <img src="/icons/back.svg" alt="logo" className="w-2.5 h-2.5" />
+          <img src="/icons/back.svg" alt="back" className="w-2.5 h-2.5" />
           <span className="text-gray-800 text-sm font-semibold">Back to Homepage</span>
         </Link>
       </nav>
 
       <div className="flex flex-row w-full max-lg:flex-col-reverse">
-
         {/* Left — Resume Preview */}
         <section className="feedback-section bg-[url('/images/bg-small.svg')] bg-cover h-[100vh] sticky top-0 items-center justify-center">
-          {imageUrl && resumeUrl && (
+          {imageUrl ? (
             <div className="animate-in fade-in duration-1000 gradient-border max-sm:m-0 h-[90%] max-wxl:h-fit w-fit">
-              <a href={resumeUrl} target="_blank" rel="noopener noreferrer">
+              <a href={resumeUrl || imageUrl} target="_blank" rel="noopener noreferrer">
                 <img
                   src={imageUrl}
-                  className="w-full h-full object-contain rounded-2xl"
-                  title="resume"
+                  className="w-full h-full object-contain rounded-2xl shadow-lg"
+                  title="Click to open full PDF"
+                  alt="resume preview"
                 />
               </a>
             </div>
+          ) : (
+            <div className="text-gray-400 font-medium">No Image Preview</div>
           )}
         </section>
 
         {/* Right — AI Feedback */}
         <section className="feedback-section">
-          <h2 className="text-4xl !text-black font-bold">Resume Review</h2>
+          <h2 className="text-4xl !text-black font-bold mb-4">Resume Review</h2>
 
-          {feedback ? (
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <img src="/images/resume-scan-2.gif" className="w-full max-w-sm" alt="loading" />
+            </div>
+          )}
+
+          {errorMsg && (
+            <div className="p-6 bg-red-50 text-red-600 rounded-2xl border border-red-200 font-medium">
+              {errorMsg}
+            </div>
+          )}
+
+          {!loading && feedback && (
             <div className="flex flex-col gap-8 animate-in fade-in duration-1000">
               <Summary feedback={feedback} />
               <ATS
@@ -106,11 +110,8 @@ const Resume = () => {
               />
               <Details feedback={feedback} />
             </div>
-          ) : (
-            <img src="/images/resume-scan-2.gif" className="w-full" />
           )}
         </section>
-
       </div>
     </main>
   );
