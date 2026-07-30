@@ -29,10 +29,29 @@ export const links: Route.LinksFunction = () => [
 export function Layout({ children }: { children: React.ReactNode }) {
   const { init } = usePuterStore();
 
-useEffect(() => {
-  init();
-}, [init]);
-  
+  useEffect(() => {
+    // Only load and initialize Puter SDK if running inside Puter.com / Puter.site environment
+    if (typeof window !== "undefined") {
+      const isPuterDomain =
+        window.location.hostname.includes("puter.site") ||
+        window.location.hostname.includes("puter.com");
+
+      if (isPuterDomain) {
+        if (!document.getElementById("puter-js-sdk")) {
+          const script = document.createElement("script");
+          script.id = "puter-js-sdk";
+          script.src = "https://js.puter.com/v2/";
+          script.onload = () => {
+            init();
+          };
+          document.body.appendChild(script);
+        } else {
+          init();
+        }
+      }
+    }
+  }, [init]);
+
   return (
     <html lang="en">
       <head>
@@ -42,9 +61,6 @@ useEffect(() => {
         <Links />
       </head>
       <body>
-       <script src="https://js.puter.com/v2/"></script>
-
-
         {children}
         <ScrollRestoration />
         <Scripts />
