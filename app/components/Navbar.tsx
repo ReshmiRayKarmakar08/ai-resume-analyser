@@ -10,16 +10,15 @@ const Navbar = () => {
       </Link>
 
       <div className="flex items-center gap-3">
-        {/* Puter Live App Link */}
+        {/* Puter Live App Link without emojis */}
         <a
           href={PUTER_LIVE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition hover:bg-purple-50 bg-white border-purple-300 text-purple-700 shadow-sm"
-          title="Open original deployment on Puter.com"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold border transition hover:bg-purple-100 bg-white border-purple-300 text-purple-700 shadow-sm"
+          title="Open the same interface powered by Puter's in-built AI"
         >
-          <span>⚡ Live Puter App</span>
-          <span className="text-[10px]">↗</span>
+          <span>Use In-Built Puter AI</span>
         </a>
 
         <Link to="/upload" className="primary-button w-fit">
