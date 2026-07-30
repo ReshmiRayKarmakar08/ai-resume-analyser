@@ -21,25 +21,8 @@ The platform operates on a **Dual-Engine Architecture**:
 ---
 
 ## 🖼️ Application Interface
+<img width="1919" height="993" alt="image" src="https://github.com/user-attachments/assets/8b63875a-2c7d-4ebe-95bf-5349eebbcdd2" />
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  RESUMIND                                    [Use In-Built Puter AI] [Upload]│
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│                   Smart Feedback For Your Dream Job                         │
-│             Drop your resume for an ATS score and improvement tips           │
-│                                                                             │
-│   ┌─────────────────────────────────────────────────────────────────────┐   │
-│   │ [Company Name]   [Job Title]                                         │   │
-│   │ [Job Description Text Area]                                         │   │
-│   │ ┌─────────────────────────────────────────────────────────────────┐ │   │
-│   │ │ 📑 Drag and drop your PDF resume here                           │ │   │
-│   │ └─────────────────────────────────────────────────────────────────┘ │   │
-│   │                         [ Analyze Resume ]                          │   │
-│   └─────────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
 
 ---
 
