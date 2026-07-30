@@ -11,9 +11,10 @@ import { useEffect, useState } from "react";
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "Resumind - AI Resume Analyzer" },
-    { name: "description", content: "Smart AI feedback for your dream job with RAG & Puter support!" },
+    { name: "description", content: "Smart AI feedback for your dream job with direct LLM API & Puter support!" },
   ];
 }
+
 
 export default function Home() {
   const puterStore = usePuterStore();
