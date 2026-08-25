@@ -151,13 +151,21 @@ ${resumeText}`;
     );
   }
 
-  const cleaned = rawResponseText
-    .replace(/```json/gi, "")
-    .replace(/```/g, "")
-    .trim();
+  // 1. Remove thinking tags if present (e.g. Qwen / DeepSeek models)
+  let textToParse = rawResponseText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
+  // 2. Extract substring between first '{' and last '}' to isolate JSON
+  const firstBrace = textToParse.indexOf("{");
+  const lastBrace = textToParse.lastIndexOf("}");
+
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    textToParse = textToParse.substring(firstBrace, lastBrace + 1);
+  } else {
+    textToParse = textToParse.replace(/```json/gi, "").replace(/```/g, "").trim();
+  }
 
   try {
-    return JSON.parse(cleaned);
+    return JSON.parse(textToParse);
   } catch (err) {
     console.error("Failed to parse LLM response JSON:", rawResponseText);
     throw new Error("Invalid response format received from AI service.");
