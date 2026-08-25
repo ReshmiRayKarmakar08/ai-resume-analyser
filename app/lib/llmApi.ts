@@ -21,7 +21,7 @@ export function getEnvApiKey(provider: LLMProvider): string {
 
 export function getEngineConfig(): EngineConfig {
   const provider = ((typeof import.meta !== "undefined" && import.meta.env?.VITE_DEFAULT_PROVIDER) as LLMProvider) || "groq";
-  let defaultModel = "qwen/qwen3.6-27b";
+  let defaultModel = "openai/gpt-oss-20b";
   if (provider === "google") defaultModel = "gemini-1.5-flash";
   if (provider === "openai") defaultModel = "gpt-4o-mini";
   if (provider === "openrouter") defaultModel = "google/gemini-2.0-flash-lite-preview-02-05:free";
@@ -37,9 +37,8 @@ export function getEngineConfig(): EngineConfig {
 const SYSTEM_PROMPT = `You are an expert ATS (Applicant Tracking System) and career coach.
 Analyze this resume for the target Job Title and Job Description.
 
-IMPORTANT: Do NOT use thinking tags. Do NOT include any preamble, markdown, or explanatory text.
-Your ENTIRE response must be ONLY the JSON object below and nothing else.
-
+You MUST respond with ONLY a valid JSON object. No markdown, no backticks, no intro text.
+JSON Structure:
 {
   "overallScore": <number 0-100>,
   "ATS": {
@@ -74,59 +73,6 @@ Your ENTIRE response must be ONLY the JSON object below and nothing else.
   }
 }`;
 
-/**
- * Extract pure JSON from LLM response that may contain thinking tags,
- * markdown fences, or other surrounding text.
- */
-function extractJSON(raw: string): string {
-  // Step 1: Strip everything between <think> and </think> (including tags)
-  // Use a character-class approach to avoid HTML escaping issues in builds
-  let cleaned = raw;
-  const thinkOpenIdx = cleaned.indexOf("<think>");
-  if (thinkOpenIdx !== -1) {
-    const thinkCloseIdx = cleaned.indexOf("</think>", thinkOpenIdx);
-    if (thinkCloseIdx !== -1) {
-      cleaned = cleaned.substring(0, thinkOpenIdx) + cleaned.substring(thinkCloseIdx + 8);
-    } else {
-      // No closing tag — remove everything from <think> to end, then nothing useful before it
-      cleaned = cleaned.substring(0, thinkOpenIdx);
-    }
-  }
-
-  // Step 2: Remove markdown code fences
-  cleaned = cleaned.replace(/```json/gi, "").replace(/```/g, "");
-
-  // Step 3: Find the outermost JSON object by matching braces
-  cleaned = cleaned.trim();
-  const startIdx = cleaned.indexOf("{");
-  if (startIdx === -1) return cleaned;
-
-  let depth = 0;
-  let endIdx = -1;
-  for (let i = startIdx; i < cleaned.length; i++) {
-    if (cleaned[i] === "{") depth++;
-    else if (cleaned[i] === "}") {
-      depth--;
-      if (depth === 0) {
-        endIdx = i;
-        break;
-      }
-    }
-  }
-
-  if (endIdx !== -1) {
-    return cleaned.substring(startIdx, endIdx + 1);
-  }
-
-  // Fallback: just grab from first { to last }
-  const lastBrace = cleaned.lastIndexOf("}");
-  if (lastBrace > startIdx) {
-    return cleaned.substring(startIdx, lastBrace + 1);
-  }
-
-  return cleaned;
-}
-
 async function callGroqAPI(apiKey: string, promptContent: string, modelName: string) {
   const client = new OpenAI({
     apiKey,
@@ -134,11 +80,12 @@ async function callGroqAPI(apiKey: string, promptContent: string, modelName: str
     dangerouslyAllowBrowser: true,
   });
   const response = await client.chat.completions.create({
-    model: modelName || "qwen/qwen3.6-27b",
+    model: modelName,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: promptContent },
     ],
+    response_format: { type: "json_object" },
   });
   return response.choices[0]?.message?.content || "";
 }
@@ -175,11 +122,11 @@ ${resumeText}`;
   let rawResponseText = "";
   let lastError: any = null;
 
-  // 1. Try Groq Primary API
+  // 1. Try Groq Primary API with GPT-OSS-20B (supports strict JSON mode)
   const groqKey = getEnvApiKey("groq");
   if (groqKey) {
     try {
-      rawResponseText = await callGroqAPI(groqKey, promptContent, "qwen/qwen3.6-27b");
+      rawResponseText = await callGroqAPI(groqKey, promptContent, "openai/gpt-oss-20b");
     } catch (err) {
       console.warn("Groq API error, attempting fallback to Gemini:", err);
       lastError = err;
@@ -205,14 +152,34 @@ ${resumeText}`;
     );
   }
 
-  // Extract clean JSON from potentially messy LLM output
-  const jsonString = extractJSON(rawResponseText);
+  // Clean the response: strip markdown fences and isolate JSON
+  let cleaned = rawResponseText
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
+
+  // Extract JSON object by finding first { and matching closing }
+  const startIdx = cleaned.indexOf("{");
+  if (startIdx !== -1) {
+    let depth = 0;
+    let endIdx = -1;
+    for (let i = startIdx; i < cleaned.length; i++) {
+      if (cleaned[i] === "{") depth++;
+      else if (cleaned[i] === "}") {
+        depth--;
+        if (depth === 0) { endIdx = i; break; }
+      }
+    }
+    if (endIdx !== -1) {
+      cleaned = cleaned.substring(startIdx, endIdx + 1);
+    }
+  }
 
   try {
-    return JSON.parse(jsonString);
+    return JSON.parse(cleaned);
   } catch (err) {
-    console.error("Failed to parse LLM response JSON. Extracted:", jsonString);
-    console.error("Original raw response:", rawResponseText);
+    console.error("Failed to parse LLM JSON. Cleaned:", cleaned);
+    console.error("Original raw:", rawResponseText);
     throw new Error("Invalid response format received from AI service.");
   }
 }
