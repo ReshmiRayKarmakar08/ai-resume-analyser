@@ -21,7 +21,7 @@ export function getEnvApiKey(provider: LLMProvider): string {
 
 export function getEngineConfig(): EngineConfig {
   const provider = ((typeof import.meta !== "undefined" && import.meta.env?.VITE_DEFAULT_PROVIDER) as LLMProvider) || "groq";
-  let defaultModel = "llama-3.3-70b-versatile";
+  let defaultModel = "qwen/qwen3.6-27b";
   if (provider === "google") defaultModel = "gemini-1.5-flash";
   if (provider === "openai") defaultModel = "gpt-4o-mini";
   if (provider === "openrouter") defaultModel = "google/gemini-2.0-flash-lite-preview-02-05:free";
@@ -80,7 +80,7 @@ async function callGroqAPI(apiKey: string, promptContent: string, modelName: str
     dangerouslyAllowBrowser: true,
   });
   const response = await client.chat.completions.create({
-    model: modelName || "llama-3.3-70b-versatile",
+    model: modelName || "qwen/qwen3.6-27b",
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: promptContent },
@@ -126,7 +126,7 @@ ${resumeText}`;
   const groqKey = getEnvApiKey("groq");
   if (groqKey) {
     try {
-      rawResponseText = await callGroqAPI(groqKey, promptContent, "llama-3.3-70b-versatile");
+      rawResponseText = await callGroqAPI(groqKey, promptContent, "qwen/qwen3.6-27b");
     } catch (err) {
       console.warn("Groq API error, attempting fallback to Gemini:", err);
       lastError = err;
