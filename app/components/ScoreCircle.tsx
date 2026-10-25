@@ -1,13 +1,17 @@
+import { useId } from "react";
+
 const ScoreCircle = ({ score = 75 }: { score: number }) => {
+  const gradientId = useId();
   const radius = 40;
   const stroke = 8;
   const normalizedRadius = radius - stroke / 2;
   const circumference = 2 * Math.PI * normalizedRadius;
-  const progress = score / 100;
+  const safeScore = Math.min(Math.max(score, 0), 100);
+  const progress = safeScore / 100;
   const strokeDashoffset = circumference * (1 - progress);
 
   return (
-    <div className="relative w-[100px] h-[100px]">
+    <div className="relative w-[70px] h-[70px] sm:w-[82px] sm:h-[82px] shrink-0">
       <svg
         height="100%"
         width="100%"
@@ -19,13 +23,13 @@ const ScoreCircle = ({ score = 75 }: { score: number }) => {
           cx="50"
           cy="50"
           r={normalizedRadius}
-          stroke="#e5e7eb"
+          stroke="#f1f5f9"
           strokeWidth={stroke}
           fill="transparent"
         />
         {/* Partial circle with gradient */}
         <defs>
-          <linearGradient id="grad" x1="1" y1="0" x2="0" y2="1">
+          <linearGradient id={gradientId} x1="1" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#FF97AD" />
             <stop offset="100%" stopColor="#5171FF" />
           </linearGradient>
@@ -34,7 +38,7 @@ const ScoreCircle = ({ score = 75 }: { score: number }) => {
           cx="50"
           cy="50"
           r={normalizedRadius}
-          stroke="url(#grad)"
+          stroke={`url(#${gradientId})`}
           strokeWidth={stroke}
           fill="transparent"
           strokeDasharray={circumference}
@@ -45,10 +49,10 @@ const ScoreCircle = ({ score = 75 }: { score: number }) => {
 
       {/* Score and issues */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-semibold text-sm">{`${score}/100`}</span>
+        <span className="font-bold text-xs sm:text-sm text-gray-800">{`${score}/100`}</span>
       </div>
     </div>
   );
 };
 
-export default ScoreCircle;
+export default ScoreCircle;

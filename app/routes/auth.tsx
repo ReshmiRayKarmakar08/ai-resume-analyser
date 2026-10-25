@@ -20,21 +20,19 @@ const Auth = () => {
   }, [auth.isAuthenticated, next, navigate]);
 
   return (
-    <main className="bg-[url('/images/bg-auth.svg')] bg-cover min-h-screen flex items-center justify-center">
-
-      <div className="gradient-border shadow-lg">
-        <section className="flex flex-col gap-8 bg-white rounded-2xl p-10">
-
+    <main className="bg-[url('/images/bg-auth.svg')] bg-cover bg-center min-h-screen flex items-center justify-center p-4">
+      <div className="gradient-border shadow-lg w-full max-w-lg">
+        <section className="flex flex-col gap-6 sm:gap-8 bg-white rounded-2xl p-6 sm:p-10 w-full items-center">
           {/* Heading */}
-          <div className="flex flex-col items-center gap-2 text-center">
-            <h1>Welcome</h1>
-            <h2>Log In to Continue Your Job Journey</h2>
+          <div className="flex flex-col items-center gap-2 text-center w-full">
+            <h1 className="!text-3xl sm:!text-4xl md:!text-5xl font-bold">Welcome</h1>
+            <h2 className="!text-base sm:!text-lg text-gray-600">Log In to Continue Your Job Journey</h2>
           </div>
 
           {/* Auth Button Section */}
-          <div>
+          <div className="w-full flex justify-center">
             {isLoading ? (
-              <button className="auth-button animate-pulse">
+              <button className="auth-button animate-pulse" disabled>
                 <p>Signing you in...</p>
               </button>
             ) : (
@@ -57,12 +55,10 @@ const Auth = () => {
               </>
             )}
           </div>
-
         </section>
       </div>
-
     </main>
   );
 };
 
-export default Auth;
+export default Auth;

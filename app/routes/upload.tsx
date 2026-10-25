@@ -260,19 +260,19 @@ const Upload = () => {
   };
 
   return (
-    <main className="bg-[url('/images/bg-main.svg')] bg-cover min-h-screen">
+    <main className="bg-[url('/images/bg-main.svg')] bg-cover bg-no-repeat bg-top min-h-screen w-full overflow-x-hidden">
       <Navbar />
 
       <section className="main-section">
-        <div className="page-heading py-12">
+        <div className="page-heading py-6 sm:py-10 md:py-12">
           <h1>Smart feedback for your dream job</h1>
 
           {isProcessing ? (
-            <div className="mt-8 flex flex-col items-center">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">{statusText}</h2>
+            <div className="mt-8 flex flex-col items-center w-full max-w-md mx-auto">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">{statusText}</h2>
               <img
                 src="/images/resume-scan.gif"
-                className="w-full max-w-md rounded-2xl shadow-lg"
+                className="w-full rounded-2xl shadow-lg"
                 alt="resume scanning"
               />
             </div>
@@ -281,7 +281,7 @@ const Upload = () => {
           )}
 
           {!isProcessing && (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6 mt-6 max-w-2xl mx-auto">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-6 mt-6 w-full max-w-2xl mx-auto">
               <input
                 name="company-name"
                 placeholder="Company Name"
@@ -299,7 +299,7 @@ const Upload = () => {
                 rows={5}
               />
               <FileUploader onFileSelect={handleFileSelect} />
-              <button className="primary-button" type="submit">
+              <button className="primary-button w-full text-base sm:text-lg font-semibold py-3" type="submit">
                 Analyze Resume
               </button>
             </form>

@@ -3,7 +3,6 @@ import Navbar from "~/components/Navbar";
 import ResumeCard from "~/components/ResumeCard";
 import { usePuterStore } from "~/lib/puter";
 import { resumeStorage, type ResumeRecord } from "~/lib/resumeStorage";
-import { getEngineConfig } from "~/lib/llmApi";
 
 import { Link } from "react-router";
 import { useEffect, useState } from "react";
@@ -14,7 +13,6 @@ export function meta({}: Route.MetaArgs) {
     { name: "description", content: "Smart AI feedback for your dream job with direct LLM API & Puter support!" },
   ];
 }
-
 
 export default function Home() {
   const puterStore = usePuterStore();
@@ -38,12 +36,12 @@ export default function Home() {
   }, [puterStore.auth.isAuthenticated]);
 
   return (
-    <main className="bg-[url('/images/bg-main.svg')] bg-cover min-h-screen">
+    <main className="bg-[url('/images/bg-main.svg')] bg-cover bg-no-repeat bg-top min-h-screen w-full overflow-x-hidden">
       <Navbar />
 
       <section className="main-section">
-        <div className="page-heading py-12">
-          <h1>Track Your Applications & Resume Ratings</h1>
+        <div className="page-heading py-6 sm:py-10 md:py-12">
+          <h1>Track Your Applications &amp; Resume Ratings</h1>
           {!loadingResumes && resumes?.length === 0 ? (
             <h2>No resumes found. Upload your first resume to get AI feedback.</h2>
           ) : (
@@ -53,12 +51,12 @@ export default function Home() {
 
         {loadingResumes && (
           <div className="flex flex-col items-center justify-center py-12">
-            <img src="/images/resume-scan-2.gif" className="w-[200px]" alt="loading" />
+            <img src="/images/resume-scan-2.gif" className="w-[160px] sm:w-[200px]" alt="loading" />
           </div>
         )}
 
         {!loadingResumes && resumes.length > 0 && (
-          <div className="resumes-section grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="resumes-section">
             {resumes.map((resume) => (
               <ResumeCard key={resume.id} resume={resume as any} />
             ))}
@@ -67,7 +65,7 @@ export default function Home() {
 
         {!loadingResumes && resumes?.length === 0 && (
           <div className="flex flex-col items-center justify-center mt-6 gap-4">
-            <Link to="/upload" className="primary-button w-fit text-xl font-semibold">
+            <Link to="/upload" className="primary-button !w-fit text-base sm:text-lg font-semibold px-6 py-3">
               Upload Resume
             </Link>
           </div>
@@ -75,4 +73,4 @@ export default function Home() {
       </section>
     </main>
   );
-}
+}

@@ -35,28 +35,43 @@ const ResumeCard = ({ resume }: { resume: Resume }) => {
   }, [imagePath, imageDataUrl]);
 
   return (
-    <Link to={`/resume/${id}`} className="resume-card animate-in fade-in duration-1000 hover:shadow-xl transition-all">
+    <Link
+      to={`/resume/${id}`}
+      className="resume-card group animate-in fade-in duration-500 hover:-translate-y-1"
+    >
       <div className="resume-card-header">
-        <div className="flex flex-col gap-2">
-          {companyName && <h2 className="!text-black font-bold break-words">{companyName}</h2>}
-          {jobTitle && <h3 className="text-lg break-words text-gray-500">{jobTitle}</h3>}
-          {!companyName && !jobTitle && <h2 className="!text-black font-bold">Resume</h2>}
+        <div className="flex flex-col gap-1 min-w-0 flex-1 pr-2">
+          <h2
+            className="!text-gray-900 !text-left text-lg sm:text-xl font-bold truncate tracking-tight"
+            title={companyName || "Resume"}
+          >
+            {companyName || "Resume"}
+          </h2>
+          <h3
+            className="text-sm sm:text-base text-gray-500 truncate"
+            title={jobTitle || "Role feedback"}
+          >
+            {jobTitle || "Role feedback"}
+          </h3>
         </div>
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <ScoreCircle score={feedback?.overallScore ?? 0} />
         </div>
       </div>
-      {resumeUrl && (
-        <div className="gradient-border animate-in fade-in duration-1000">
-          <div className="w-full h-full">
-            <img
-              src={resumeUrl}
-              alt="resume"
-              className="w-full h-[350px] max-sm:h-[200px] object-cover object-top rounded-xl"
-            />
+
+      <div className="gradient-border overflow-hidden rounded-xl w-full flex items-center justify-center bg-gray-50/50">
+        {resumeUrl ? (
+          <img
+            src={resumeUrl}
+            alt="resume preview"
+            className="w-full h-[260px] sm:h-[300px] md:h-[340px] object-cover object-top rounded-lg group-hover:scale-[1.02] transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-[260px] sm:h-[300px] md:h-[340px] flex items-center justify-center text-gray-400 text-sm font-medium">
+            No preview available
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </Link>
   );
 };
