@@ -1,47 +1,64 @@
-import {Link} from "react-router";
+import { Link } from "react-router";
 import ScoreCircle from "~/components/ScoreCircle";
-import {useEffect, useState} from "react";
-import {usePuterStore} from "~/lib/puter";
+import { useEffect, useState } from "react";
+import { usePuterStore } from "~/lib/puter";
 
-const ResumeCard = ({ resume: { id, companyName, jobTitle, feedback, imagePath } }: { resume: Resume }) => {
-    const { fs } = usePuterStore();
-    const [resumeUrl, setResumeUrl] = useState('');
+const ResumeCard = ({ resume }: { resume: Resume }) => {
+  const { id, companyName, jobTitle, feedback, imagePath, imageDataUrl } = resume;
+  const { fs } = usePuterStore();
+  const [resumeUrl, setResumeUrl] = useState<string>(imageDataUrl || "");
 
-    useEffect(() => {
-        const loadResume = async () => {
-            const blob = await fs.read(imagePath);
-            if(!blob) return;
-            let url = URL.createObjectURL(blob);
-            setResumeUrl(url);
-        }
+  useEffect(() => {
+    if (imageDataUrl) {
+      setResumeUrl(imageDataUrl);
+      return;
+    }
 
-        loadResume();
-    }, [imagePath]);
+    if (!imagePath) return;
 
-    return (
-        <Link to={`/resume/${id}`} className="resume-card animate-in fade-in duration-1000">
-            <div className="resume-card-header">
-                <div className="flex flex-col gap-2">
-                    {companyName && <h2 className="!text-black font-bold break-words">{companyName}</h2>}
-                    {jobTitle && <h3 className="text-lg break-words text-gray-500">{jobTitle}</h3>}
-                    {!companyName && !jobTitle && <h2 className="!text-black font-bold">Resume</h2>}
-                </div>
-                <div className="flex-shrink-0">
-                    <ScoreCircle score={feedback.overallScore} />
-                </div>
-            </div>
-            {resumeUrl && (
-                <div className="gradient-border animate-in fade-in duration-1000">
-                    <div className="w-full h-full">
-                        <img
-                            src={resumeUrl}
-                            alt="resume"
-                            className="w-full h-[350px] max-sm:h-[200px] object-cover object-top"
-                        />
-                    </div>
-                </div>
-                )}
-        </Link>
-    )
-}
-export default ResumeCard
+    let isMounted = true;
+    const loadResume = async () => {
+      try {
+        const blob = await fs.read(imagePath);
+        if (!blob || !isMounted) return;
+        const url = URL.createObjectURL(blob);
+        setResumeUrl(url);
+      } catch (e) {
+        console.warn("Could not load image preview from Puter FS:", e);
+      }
+    };
+
+    loadResume();
+    return () => {
+      isMounted = false;
+    };
+  }, [imagePath, imageDataUrl]);
+
+  return (
+    <Link to={`/resume/${id}`} className="resume-card animate-in fade-in duration-1000 hover:shadow-xl transition-all">
+      <div className="resume-card-header">
+        <div className="flex flex-col gap-2">
+          {companyName && <h2 className="!text-black font-bold break-words">{companyName}</h2>}
+          {jobTitle && <h3 className="text-lg break-words text-gray-500">{jobTitle}</h3>}
+          {!companyName && !jobTitle && <h2 className="!text-black font-bold">Resume</h2>}
+        </div>
+        <div className="flex-shrink-0">
+          <ScoreCircle score={feedback?.overallScore ?? 0} />
+        </div>
+      </div>
+      {resumeUrl && (
+        <div className="gradient-border animate-in fade-in duration-1000">
+          <div className="w-full h-full">
+            <img
+              src={resumeUrl}
+              alt="resume"
+              className="w-full h-[350px] max-sm:h-[200px] object-cover object-top rounded-xl"
+            />
+          </div>
+        </div>
+      )}
+    </Link>
+  );
+};
+
+export default ResumeCard;

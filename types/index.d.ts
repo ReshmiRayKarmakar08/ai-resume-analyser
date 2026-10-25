@@ -9,9 +9,13 @@ interface Resume {
   id: string;
   companyName?: string;
   jobTitle?: string;
-  imagePath: string;
-  resumePath: string;
+  imagePath?: string;
+  resumePath?: string;
+  imageDataUrl?: string;
+  resumeDataUrl?: string;
   feedback: Feedback;
+  createdAt?: number;
+  engineUsed?: "puter" | "standalone" | "standalone-rag";
 }
 
 interface Feedback {
